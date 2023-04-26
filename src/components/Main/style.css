@@ -1,0 +1,6 @@
+.main {
+  width: 100%;
+
+  /* height de 100% - (header + footer)  */
+  height: calc(100% - 60px);
+}
