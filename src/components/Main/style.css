@@ -3,4 +3,103 @@
 
   /* height de 100% - (header + footer)  */
   height: calc(100% - 60px);
+
+  /* cor de fundo */
+  background-color: var(--primary-bg-color);
+}
+
+.painel {
+  width: 100%;
+  height: calc(100% - 30px);
+}
+
+.painel-header {
+  display: flex;
+  align-items: center;
+}
+.painel-header--border---left {
+  width: 50%;
+  height: 2px;
+  border-top: 2px white solid;
+  border-bottom: 2px white solid;
+
+  /* colocando position como relative porque é aqui o ponto de referência para posicionar o icon  */
+  position: relative;
+}
+
+.icon-border {
+  /* definindo tamanho do icon da borda  */
+  width: 30px;
+  height: 20px;
+
+  /* colocando os colchetes um ao lado do outro  */
+  display: flex;
+
+  /* posicionando o icon entre a borda, necessário utilizar position absolute  */
+  position: absolute;
+  top: -8px;
+  left: 14px;
+
+  /* estilizando o icon */
+  background-color: var(--primary-bg-color);
+  color: white;
+}
+
+.icon-border-inside {
+  align-self: center;
+  width: 10px;
+  height: 10px;
+  background-color: greenyellow;
+}
+
+.painel-header--border---right {
+  width: 50%;
+  height: 2px;
+  border-top: 2px white solid;
+  border-bottom: 2px white solid;
+}
+
+.painel-header---title {
+  color: white;
+  margin: 0 6px;
+}
+
+.painel-main {
+  /* deixa margin negativa para que os vertices da borda entrelaçarem */
+  margin-top: -10px;
+  margin-bottom: -2px;
+
+  /* espaçamento  */
+  padding: 10px;
+
+  /* tamanho do main  */
+  height: 100%;
+
+  border-left: 4px white double;
+  border-right: 4px white double;
+}
+
+.painel-footer {
+  width: 100%;
+}
+
+.painel-footer--border {
+  height: 2px;
+  border: 2px white solid;
+}
+
+.painel-main--input {
+  /* removendo a borda do input  */
+  border: unset;
+
+  /* removendo a borda quando o input estiver ativo  */
+  outline: none;
+
+  /* tamanho do input text  */
+  width: 100%;
+  height: 100%;
+
+  /* cores de fundo e cor do texto  */
+  background-color: var(--primary-bg-color);
+  color: white;
 }

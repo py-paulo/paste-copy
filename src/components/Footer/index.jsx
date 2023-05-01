@@ -5,27 +5,27 @@ const Footer = () => {
       <nav className="nav">
         <ul className="nav-ul">
           <li className="nav-ul--li">
-            <p>F1</p>
+            <span>F1</span>
             <p> Help</p>
           </li>
           <li className="nav-ul--li">
-            <p>F2</p>
+            <span>F2</span>
             <p> Save</p>
           </li>
           <li className="nav-ul--li">
-            <p>F3</p>
+            <span>F3</span>
             <p> Open</p>
           </li>
           <li className="nav-ul--li">
-            <p>Alt-F9</p>
+            <span>Alt-F9</span>
             <p> Compile</p>
           </li>
           <li className="nav-ul--li">
-            <p>F9</p>
+            <span>F9</span>
             <p> Make</p>
           </li>
           <li className="nav-ul--li">
-            <p>F10</p>
+            <span>F10</span>
             <p> Menu</p>
           </li>
         </ul>

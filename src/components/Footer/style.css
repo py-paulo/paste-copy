@@ -17,11 +17,15 @@
 .nav-ul {
   /* colocando os itens um ao lado do outro */
   display: flex;
-
-  /* espaçando os itens */
-  justify-content: space-around;
 }
 
 .nav-ul--li {
   display: flex;
+  margin-left: 4px;
+  padding: 0 8px;
+}
+
+.nav-ul--li span {
+  margin-right: 4px;
+  color: var(--secondary-text);
 }
