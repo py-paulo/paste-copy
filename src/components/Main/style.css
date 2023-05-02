@@ -102,4 +102,6 @@
   /* cores de fundo e cor do texto  */
   background-color: var(--primary-bg-color);
   color: white;
+
+  caret-color: yellow;
 }
