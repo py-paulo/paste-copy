@@ -2,10 +2,15 @@ import "./style.css";
 
 const Header = () => {
   return (
+    // tag header para mostrar que é o "cabeçario" da página
     <header className="header">
+      {/* tag <nav> por ser o menu de navegação */}
       <nav className="nav">
+        {/* para listar elementos sem necessariamente precisar estar em ordem, usamos a tag <ul>  */}
         <ul className="nav-ul">
+          {/* dentro de uma tag <ul> ou <ol> precisamos adicionar as <li>  */}
           <li className="nav-ul---li">
+            {/* coloquei essa tag <span> para poder estilizar a primeira palavra diferente das demais  */}
             <span className="first-word">F</span>
             ile
           </li>
