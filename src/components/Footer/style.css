@@ -22,10 +22,22 @@
 .nav-ul--li {
   display: flex;
   margin-left: 4px;
-  padding: 0 8px;
+  padding: 2px 8px;
 }
 
 .nav-ul--li span {
   margin-right: 4px;
   color: var(--secondary-text);
+}
+
+/* efeitos de hover  */
+.nav-ul--li:hover {
+  /* efeito de transição "animação"  */
+  transition: all 0.5s ease-in-out;
+
+  /* mudar o cursor  */
+  cursor: pointer;
+
+  /* cor de fundo  */
+  background-color: #00a800ff;
 }
