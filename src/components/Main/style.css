@@ -103,5 +103,9 @@
   background-color: var(--primary-bg-color);
   color: white;
 
+  /* cor do ponteiro do input  */
   caret-color: yellow;
+
+  /* tirar a opção de modificar o tamanho da área de texto */
+  resize: none;
 }
