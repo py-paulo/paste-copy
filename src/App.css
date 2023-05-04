@@ -12,3 +12,25 @@
   --primary-bg-color: rgb(0, 0, 170);
   --secondary-text: rgb(169, 17, 17);
 }
+
+/* customizando scrollbar  */
+
+::-webkit-scrollbar {
+  width: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: #00aaaaff;
+}
+
+::-webkit-scrollbar-button {
+  background-color: aqua;
+}
+::-webkit-scrollbar-track {
+  box-shadow: inset 0 0 5px grey;
+  background-color: var(--primary-bg-color);
+}
+
+::-webkit-scrollbar-corner {
+  background-color: black;
+}
