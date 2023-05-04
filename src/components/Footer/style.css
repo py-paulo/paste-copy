@@ -29,15 +29,3 @@
   margin-right: 4px;
   color: var(--secondary-text);
 }
-
-/* efeitos de hover  */
-.nav-ul--li:hover {
-  /* efeito de transição "animação"  */
-  transition: all 0.5s ease-in-out;
-
-  /* mudar o cursor  */
-  cursor: pointer;
-
-  /* cor de fundo  */
-  background-color: #00a800ff;
-}
