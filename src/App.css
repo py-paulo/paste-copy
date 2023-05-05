@@ -11,6 +11,7 @@
   /* variáveis */
   --primary-bg-color: rgb(0, 0, 170);
   --secondary-text: rgb(169, 17, 17);
+  --hover: #00a800ff;
 }
 
 /* customizando scrollbar  */
