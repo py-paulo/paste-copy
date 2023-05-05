@@ -1,9 +1,13 @@
 import { useState } from "react";
 import "./style.css";
+import PopUp from "../PopUp";
 
 const Header = () => {
   // guardar o estado de ativação da opção Edit
   const [btnEdit, setBtnEdit] = useState(false);
+
+  // ocultar e revelar pop up About
+  const [btnHelp, setBtnHelp] = useState(false);
 
   return (
     // tag header para mostrar que é o "cabeçario" da página
@@ -50,7 +54,7 @@ const Header = () => {
             <span className="first-word">W</span>
             indow
           </li>
-          <li className="nav-ul---li">
+          <li className="nav-ul---li" onClick={() => setBtnHelp(!btnHelp)}>
             <span className="first-word">H</span>
             elp
           </li>
@@ -94,6 +98,8 @@ const Header = () => {
           </li>
         </ul>
       </div>
+
+      <PopUp btnHelp={btnHelp} setBtnHelp={setBtnHelp} key={10} />
     </header>
   );
 };
