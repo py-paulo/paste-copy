@@ -1,6 +1,10 @@
+import { useState } from "react";
 import "./style.css";
 
 const Header = () => {
+  // guardar o estado de ativação da opção Edit
+  const [btnEdit, setBtnEdit] = useState(false);
+
   return (
     // tag header para mostrar que é o "cabeçario" da página
     <header className="header">
@@ -14,7 +18,7 @@ const Header = () => {
             <span className="first-word">F</span>
             ile
           </li>
-          <li className="nav-ul---li">
+          <li className="nav-ul---li" onClick={() => setBtnEdit(!btnEdit)}>
             <span className="first-word">E</span>
             dit
           </li>
@@ -52,6 +56,44 @@ const Header = () => {
           </li>
         </ul>
       </nav>
+
+      {/* opcões do Edit, ativo apenas quando o usuário clicar na opção  */}
+      <div className="divEdit" style={{ display: btnEdit ? "block" : "none" }}>
+        <ul className="divEdit-ul group-1">
+          <li className="divEdit-ul--li">
+            <p>Undo</p>
+
+            <p className="atalho">Alt+BkSp</p>
+          </li>
+          <li className="divEdit-ul--li">Redo</li>
+        </ul>
+
+        <ul className="divEdit-ul group-2">
+          <li className="divEdit-ul--li">
+            {" "}
+            <p>Cut </p> <p className="atalho">Shift+Del </p>{" "}
+          </li>
+          <li className="divEdit-ul--li">
+            <p>Copy</p>
+
+            <p className="atalho">Ctrl+Ins</p>
+          </li>
+          <li className="divEdit-ul--li">
+            <p>Paste</p>
+
+            <p className="atalho">Shift+Ins</p>
+          </li>
+          <li className="divEdit-ul--li">
+            <p>Clear</p>
+            <p className="atalho">Ctrl+Del</p>
+          </li>
+
+          <li className="divEdit-ul--li">
+            <span>S</span>
+            how clipboard
+          </li>
+        </ul>
+      </div>
     </header>
   );
 };
