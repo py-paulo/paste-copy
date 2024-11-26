@@ -1,0 +1,78 @@
+.divPopUp {
+  /* tamanho do elemento    */
+  width: 350px;
+  height: 250px;
+
+  /* ordem de precedência, para que está div 
+  tenha prioridade maior sobre outras   */
+  z-index: 20;
+
+  /* estilização  */
+  background-color: silver;
+
+  /* posicao  */
+  position: relative;
+
+  /* alinhamento interno */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+
+  /* fonte e espaçamento  */
+  font-size: 18px;
+  padding: 8px;
+
+  /* sombra da div  */
+  box-shadow: 20px 30px black;
+
+  /* para centralizar a div, alinhamento externo */
+  margin: 0 auto;
+  transform: translateY(70%);
+}
+
+.divBorder {
+  /* tamanho do elemento    */
+  width: 95%;
+  height: 95%;
+
+  /* borda  */
+  border: 8px double white;
+}
+
+.divPopUp .title {
+  position: absolute;
+  top: 4px;
+  left: 160px;
+  padding: 0px 8px;
+  background-color: silver;
+  color: white;
+}
+
+.info {
+  /* margem  */
+  margin-top: 30px;
+
+  /* alinhamento interno usando display flex  */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  /* distanciamento dos itens, adiciona padding entre eles  */
+  gap: 24px;
+}
+
+.info button {
+  cursor: pointer;
+  background-color: #008000ff;
+  width: 80px;
+  box-shadow: 10px 8px 0px black;
+  outline: none;
+  text-decoration: none;
+}
+
+.divPopUp .first-word {
+  color: white;
+}
+
+.divPopUp .second-word {
+  color: yellow;
+}
