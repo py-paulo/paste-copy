@@ -108,4 +108,7 @@
 
   /* tirar a opção de modificar o tamanho da área de texto */
   resize: none;
+
+  /*font-size: 26px;*/
+  font-family: "Fixedsys62";
 }
