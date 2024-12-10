@@ -14,34 +14,32 @@ const Main = ({ username, note }) => {
   const THROTTLE = 50;
   const sendJsonMessageThrottled = useRef(throttle(sendJsonMessage, THROTTLE));
 
+  const [myText, setMyText] = useState("");
   const textareaRef = useRef(null);
+  const typingTimeoutRef = useRef(null);
 
   useEffect(() => {
     if (lastJsonMessage) {
-      let latestMessage = null;
-
-      Object.keys(lastJsonMessage).forEach((uuid) => {
-        const data = lastJsonMessage[uuid];
-        const datatime = new Date(data.state.datatime);
-
-        if (!latestMessage || datatime > new Date(latestMessage.state.datatime)) {
-          latestMessage = data;
-        }
-      });
-
-      if (latestMessage) {
-        textareaRef.current.value = latestMessage.state.text;
-      }
+      textareaRef.current.value = lastJsonMessage.text;
     }
   }, [lastJsonMessage]);
 
   const handleTextareaChange = (e) => {
     const text = e.target.value;
-    sendJsonMessageThrottled.current({
-      username,
-      text,
-      datatime: new Date().toISOString(),
-    });
+    setMyText(text);
+
+    if (typingTimeoutRef.current) {
+      clearTimeout(typingTimeoutRef.current);
+    }
+
+    typingTimeoutRef.current = setTimeout(() => {
+      console.log("sending message:", text);
+      sendJsonMessageThrottled.current({
+        username,
+        text,
+        datatime: new Date().toISOString(),
+      });
+    }, 1000);
   };
 
   return (
@@ -60,15 +58,14 @@ const Main = ({ username, note }) => {
         </div>
         <div className="painel-main">
           <textarea
-            name=""
             id="editor"
             cols="30"
             rows="10"
             className="painel-main--input"
-            onKeyUpCapture={handleTextareaChange}
+            onChange={handleTextareaChange}
             ref={textareaRef}
-          >
-          </textarea>
+            value={myText}
+          />
         </div>
         <div className="painel-footer">
           <div className="painel-footer--border" />
