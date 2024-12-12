@@ -1,0 +1,70 @@
+# Docker Compose description of the combined application.
+#
+# 'docker-compose up' will run this.
+version: '3'  # requires Docker Compose 1.13 or later
+
+services:
+  rabbitmq:
+    # There is a prebuilt RabbitMQ image; see
+    # https://hub.docker.com/_/rabbitmq/ for details.
+    # This variant is built on Alpine Linux (it's smaller) and includes
+    # the management UI.
+    image: 'rabbitmq:4.0.4-management-alpine'
+
+    # These ports are exposed on the host; 'hostport:containerport'.
+    # You could connect to this server from outside with the *host's*
+    # DNS name or IP address and port 5672 (the left-hand side of the
+    # colon).
+    ports:
+      # The standard AMQP protocol port
+      - '5672:5672'
+      # HTTP management UI
+      - '15672:15672'
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+  redis:
+    # There is a prebuilt Redis image; see
+    # https://hub.docker.com/r/bitnami/redis for details.
+    image: 'bitnami/redis:6.2.16'
+    environment:
+      - ALLOW_EMPTY_PASSWORD=yes
+      - REDIS_PORT_NUMBER=6379
+    ports:
+      - '6379:6379'
+    volumes:
+      - redis_data:/bitnami/redis
+  mongo-express:
+    # Mongo Express is a web-based MongoDB admin interface.
+    # There is a prebuilt Mongo Express image; see
+    # https://hub.docker.com/_/mongo-express/ for details.
+    image: mongo-express:1.0.2-20
+    ports:
+      - 8081:8081
+    environment:
+      ME_CONFIG_BASICAUTH_USERNAME: mongo
+      ME_CONFIG_BASICAUTH_PASSWORD: mongo
+      ME_CONFIG_MONGODB_PORT: 27017
+      ME_CONFIG_MONGODB_ADMINUSERNAME: root
+      ME_CONFIG_MONGODB_ADMINPASSWORD: mongo
+      ME_CONFIG_MONGODB_SERVER: mongo
+    depends_on:
+      - mongo
+  mongo:
+    # MongoDB is a NoSQL database.
+    # There is a prebuilt MongoDB image; see
+    # https://hub.docker.com/_/mongo/ for details.
+    image: mongo:8.0.4
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: mongo
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+volumes:
+  rabbitmq_data:
+    driver: local
+  redis_data:
+    driver: local
+  mongo_data:
+    driver: local
