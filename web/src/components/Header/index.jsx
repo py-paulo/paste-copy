@@ -31,28 +31,8 @@ const Header = () => {
             earch
           </li>
           <li className="nav-ul---li">
-            <span className="first-word">R</span>
-            un
-          </li>
-          <li className="nav-ul---li">
-            <span className="first-word">C</span>
-            ompile
-          </li>
-          <li className="nav-ul---li">
-            <span className="first-word">D</span>
-            ebug
-          </li>
-          <li className="nav-ul---li">
-            <span className="first-word">P</span>
-            roject
-          </li>
-          <li className="nav-ul---li">
             <span className="first-word">O</span>
             ptions
-          </li>
-          <li className="nav-ul---li">
-            <span className="first-word">W</span>
-            indow
           </li>
           <li className="nav-ul---li" onClick={() => setBtnHelp(!btnHelp)}>
             <span className="first-word">H</span>

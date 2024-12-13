@@ -16,14 +16,6 @@ const Footer = () => {
           <p> Open</p>
         </li>
         <li className="nav-ul--li">
-          <span>Alt-F9</span>
-          <p> Compile</p>
-        </li>
-        <li className="nav-ul--li">
-          <span>F9</span>
-          <p> Make</p>
-        </li>
-        <li className="nav-ul--li">
           <span>F10</span>
           <p> Menu</p>
         </li>
