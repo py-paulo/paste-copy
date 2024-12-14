@@ -1,7 +1,11 @@
 import logger from "./modules/logger";
 
-import WebSocket, { WebSocketServer } from "ws";
-import { ParsedUrlQuery } from 'querystring';
+import { getUsername } from "./modules/utils/user"; 
+import { Room } from "./modules/interface";
+import { validateUsername } from "./modules/filters/username";
+import { MinLengthError, InvalidCharacterError, MaxLengthError } from "./modules/errors";
+
+import { WebSocketServer } from "ws";
 import { v4 as uuidv4 } from 'uuid';
 import { createClient, RedisClientType } from 'redis';
 import { Db, MongoClient } from 'mongodb';
@@ -9,28 +13,6 @@ import { Db, MongoClient } from 'mongodb';
 import http from "http";
 import url from "url";
 import amqp from 'amqplib';
-
-/*
-* Interfaces and types
-*/
-interface Connections {
-  [uuid: string]: WebSocket;
-}
-
-/*
-* Interface que representa uma sala de chat, com uma lista de conexões,
-* a ultima menssagem enviada e a lista de usuários conectados.
-*/
-interface Room {
-  [roomName: string]: {
-    connections: Connections;
-    lastNote: string;
-    users: {
-      username: string,
-      uuid: string,
-    }[];
-  };
-}
 
 /*
 * Constants
@@ -48,40 +30,6 @@ const rooms: Room = {};
 const server = http.createServer();
 const wsServer = new WebSocketServer({ server });
 
-/**
- * Gera um nome de usuário aleatório.
- *
- * @returns {string} O nome de usuário gerado.
- */
-export function generateUsername(): string {
-  const characters = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ-_@&$#';
-  const minLength = 5;
-  const maxLength = 8;
-  const length = Math.floor(Math.random() * (maxLength - minLength + 1)) + minLength;
-
-  let username = '';
-  for (let i = 0; i < length; i++) {
-    const randomIndex = Math.floor(Math.random() * characters.length);
-    username += characters[randomIndex];
-  }
-
-  return username;
-}
-
-/**
- * Retorna um nome de usuário a partir dos valores da query, caso
- * não esteja definido retorna um nome de usuário aleatório.
- * @param queryValues 
- * @returns {string} Nome de usuário.
- */
-export function getUsername(queryValues: ParsedUrlQuery): string {
-  if (queryValues.username !== 'null') {
-    return queryValues.username as string;
-  } else {
-    return generateUsername();
-  }
-}
-
 /*
 * Código do aplicativo
 *
@@ -89,11 +37,11 @@ export function getUsername(queryValues: ParsedUrlQuery): string {
 * incluindo a lógica de manipulação de mensagens WebSocket.
 */ 
 const handleClose = (room: string, uuid: string) => {
-  const user = rooms[room].users.filter((user) => user.uuid === uuid)[0]
+  const user = rooms[room].users[uuid];
   logger.info({ msg: `user '${user.username}' in room '${room}' disconnected`, user, room, status: 'disconnected' });
 
   delete rooms[room].connections[uuid];
-  rooms[room].users = rooms[room].users.filter((user) => user.uuid !== uuid);
+  delete rooms[room].users[uuid];
 }
 
 /**
@@ -140,6 +88,14 @@ const broadcast = async (mongoDb: Db, room: string) => {
   rooms[room].lastNote = messageJsonStringfy;
 };
 
+/**
+ * Salva a mensagem no banco de dados.
+ * 
+ * @param mongoDb 
+ * @param room 
+ * @param message 
+ * @param uuid 
+ */
 const saveMessageToDatabase = async (mongoDb: Db, room: string, message: string, uuid: string) => {
   await mongoDb.collection(room).insertOne({ room, message, uuid });
 };
@@ -185,6 +141,13 @@ const connectToRabbitMQ = async () => {
   }
 };
 
+async function connectToMongoDB() {
+  const mongoUrl = 'mongodb://root:mongo@localhost:27017';
+  const mongoClient = new MongoClient(mongoUrl);
+  await mongoClient.connect();
+  return mongoClient.db('past_copy');
+}
+
 const setupRabbitMQConsumer = async (mongoDb: Db, redisClient: RedisClientType) => {
   const { channel } = await connectToRabbitMQ();
 
@@ -218,14 +181,28 @@ const setupWebSocketServer = async (mongoDb: Db, redisClient: RedisClientType) =
     const queryValues = url.parse(request.url, true).query;
     const username = getUsername(queryValues);
 
+    try {
+      validateUsername(username);
+    } catch (error) {
+      if (
+        error instanceof MinLengthError ||
+        error instanceof InvalidCharacterError ||
+        error instanceof MaxLengthError
+      ) {
+        logger.error({ msg: 'Failed to validate username', error, username });
+        wsConnection.close();
+        return;
+      }
+    }
+
     const uuid = uuidv4();
 
     logger.info({ msg: `user '${username}:${uuid}' in room '${room}' connected`, user: username, room: room, uuid, status: 'connected' });
 
-    if (!rooms[room]) rooms[room] = { connections: {}, lastNote: "", users: [] };
+    if (!rooms[room]) rooms[room] = { connections: {}, lastNote: "", users: {} };
 
     rooms[room].connections[uuid] = wsConnection;
-    rooms[room].users.push({ username, uuid });
+    rooms[room].users[uuid] = { username, uuid };
 
     /*
     * Buscar mensagem a partir do Redis.
@@ -248,13 +225,6 @@ const setupWebSocketServer = async (mongoDb: Db, redisClient: RedisClientType) =
     wsConnection.on("close", () => handleClose(room, uuid));
   });
 };
-
-async function connectToMongoDB() {
-  const mongoUrl = 'mongodb://root:mongo@localhost:27017';
-  const mongoClient = new MongoClient(mongoUrl);
-  await mongoClient.connect();
-  return mongoClient.db('past_copy');
-}
 
 const startServer = async () => {
   const mongoDb = await connectToMongoDB();
