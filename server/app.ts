@@ -145,6 +145,7 @@ async function connectToMongoDB() {
   const mongoUrl = 'mongodb://root:mongo@localhost:27017';
   const mongoClient = new MongoClient(mongoUrl);
   await mongoClient.connect();
+
   return mongoClient.db('past_copy');
 }
 
@@ -180,6 +181,8 @@ const setupWebSocketServer = async (mongoDb: Db, redisClient: RedisClientType) =
     const room = (url.parse(request.url).pathname || "welcome").replace("/", "");
     const queryValues = url.parse(request.url, true).query;
     const username = getUsername(queryValues);
+
+    console.log(request.socket.address());
 
     try {
       validateUsername(username);

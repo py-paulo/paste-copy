@@ -5,24 +5,9 @@ import Main from "./components/Main";
 
 import { useParams } from "react-router";
 
-export function generateUsername() {
-  const characters = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ-_ ';
-  const minLength = 5;
-  const maxLength = 8;
-  const length = Math.floor(Math.random() * (maxLength - minLength + 1)) + minLength;
-  
-  let username = '';
-  for (let i = 0; i < length; i++) {
-    const randomIndex = Math.floor(Math.random() * characters.length);
-    username += characters[randomIndex];
-  }
-  
-  return username;
-}
-
 function App() {
   const params = new URLSearchParams(window.location.search);
-  const username = params.get('username') || generateUsername();
+  const username = params.get('username');
   let { hash } = useParams();
 
   return (
