@@ -39,12 +39,11 @@ const wsServer = new WebSocketServer({ server });
 * Contém todo o código referente à lógica de negócios do aplicativo,
 * incluindo a lógica de manipulação de mensagens WebSocket.
 */ 
-const handleClose = (room: string, uuid: string) => {
-  const user = rooms[room].users[uuid];
-  logger.info({ msg: `user '${user.username}' in room '${room}' disconnected`, user, room, status: 'disconnected' });
+const handleClose = (room: string, ip: string) => {
+  const user = rooms[room].users[ip];
+  logger.info({ msg: `user '${user.username}' in room '${room}' disconnected`, ip, username: user.username, room, status: 'disconnected' });
 
-  delete rooms[room].connections[uuid];
-  delete rooms[room].users[uuid];
+  delete rooms[room].users[ip];
 }
 
 /**
@@ -82,8 +81,8 @@ const broadcast = async (mongoDb: Db, room: string) => {
   const messageJsonStringfy = JSON.stringify(document.message);
   const messageObject = document.message;
 
-  Object.keys(rooms[room].connections).forEach((uuid) => {
-    const connection = rooms[room].connections[uuid];
+  Object.keys(rooms[room].users).forEach((ip) => {
+    const connection = rooms[room].users[ip].connection;
     connection.send(messageJsonStringfy);
   });
 
@@ -99,14 +98,15 @@ const broadcast = async (mongoDb: Db, room: string) => {
  * @param message 
  * @param uuid 
  */
-const saveMessageToDatabase = async (mongoDb: Db, room: string, message: string, uuid: string) => {
-  await mongoDb.collection(room).insertOne({ room, message, uuid });
+const saveMessageToDatabase = async (
+  mongoDb: Db, room: string, message: string, ip: string, uuid: string
+) => {
+  await mongoDb.collection(room).insertOne({ room, message, ip, uuid });
 };
 
 const getLastMessageFromCache = async (redisClient: RedisClientType, room: string): Promise<string|undefined> => {
   const cacheKey = `room:${room}:messages`;
   try {
-    // Obter o primeiro elemento da lista (mensagem mais recente)
     const result = await redisClient.lRange(cacheKey, 0, 0);
     if (result.length === 0) {
       return;
@@ -118,15 +118,14 @@ const getLastMessageFromCache = async (redisClient: RedisClientType, room: strin
   }
 };
 
-const saveMessageToCache = async (redisClient: RedisClientType, room: string, message: string, uuid: string) => {
+const saveMessageToCache = async (
+  redisClient: RedisClientType, room: string, message: string, ip: string, uuid: string
+) => {
   const cacheKey = `room:${room}:messages`;
-  const messageData = JSON.stringify({ message, uuid });
+  const messageData = JSON.stringify({ message, ip, uuid });
 
-  // Adicionar a mensagem ao início da lista e limitar a lista a 100 mensagens
   try {
-    // Adicionar a mensagem ao início da lista
     await redisClient.lPush(cacheKey, messageData);
-    // Limitar a lista a 100 mensagens
     await redisClient.lTrim(cacheKey, 0, 99);
   } catch (err) {
     console.error('Redis error:', err);
@@ -157,17 +156,14 @@ const setupRabbitMQConsumer = async (mongoDb: Db, redisClient: RedisClientType) 
   const queue = 'chat_messages';
   await channel.assertQueue(queue, { durable: true });
 
-  // Consumidor de mensagens para a fila
   channel.consume(queue, async (msg) => {
     if (msg !== null) {
-      const { room, message, uuid } = JSON.parse(msg.content.toString());
-      logger.trace({ msg: `received message from RabbitMQ`, room, message, uuid });
+      const { room, message, ip, uuid } = JSON.parse(msg.content.toString());
+      logger.trace({ msg: `received message from RabbitMQ`, ip, room, message, uuid });
 
-      // Salvar mensagem no banco de dados e no cache Redis
-      await saveMessageToDatabase(mongoDb, room, message, uuid);
-      await saveMessageToCache(redisClient, room, message, uuid);
+      await saveMessageToDatabase(mongoDb, room, message, ip, uuid);
+      await saveMessageToCache(redisClient, room, message, ip, uuid);
 
-      // Fazer broadcast da mensagem para todos os clientes conectados
       await broadcast(mongoDb, room);
 
       channel.ack(msg);
@@ -179,12 +175,15 @@ const setupWebSocketServer = async (mongoDb: Db, redisClient: RedisClientType) =
   wsServer.on("connection", async (wsConnection, request) => {
     const { channel } = await connectToRabbitMQ();
 
+    const ip = request.socket.remoteAddress;
+    if (!ip) {
+      wsConnection.close();
+      return;
+    }
     request.url = request.url || "";
     const room = (url.parse(request.url).pathname || "welcome").replace("/", "");
     const queryValues = url.parse(request.url, true).query;
     const username = getUsername(queryValues);
-
-    console.log(request.socket.address());
 
     try {
       validateUsername(username);
@@ -202,12 +201,11 @@ const setupWebSocketServer = async (mongoDb: Db, redisClient: RedisClientType) =
 
     const uuid = uuidv4();
 
-    logger.info({ msg: `user '${username}:${uuid}' in room '${room}' connected`, user: username, room: room, uuid, status: 'connected' });
+    logger.info({ msg: `user '${username}:${ip}' in room '${room}' connected`, ip, user: username, room, uuid, status: 'connected' });
 
-    if (!rooms[room]) rooms[room] = { connections: {}, lastNote: "", users: {} };
+    if (!rooms[room]) rooms[room] = { lastNote: "", users: {} };
 
-    rooms[room].connections[uuid] = wsConnection;
-    rooms[room].users[uuid] = { username, uuid };
+    rooms[room].users[ip] = { username, uuid, connection: wsConnection };
 
     /*
     * Buscar mensagem a partir do Redis.
@@ -222,12 +220,12 @@ const setupWebSocketServer = async (mongoDb: Db, redisClient: RedisClientType) =
 
     wsConnection.on("message", async (bytes) => {
       const message = JSON.parse(bytes.toString());
-      logger.trace({ msg: `received message from websocket`, room, message, uuid });
+      logger.trace({ msg: `received message from websocket`, room, ip, message, uuid });
 
-      channel.sendToQueue(queue, Buffer.from(JSON.stringify({ room, message, uuid })), { persistent: true });
+      channel.sendToQueue(queue, Buffer.from(JSON.stringify({ room, ip, message, uuid })), { persistent: true });
     });
 
-    wsConnection.on("close", () => handleClose(room, uuid));
+    wsConnection.on("close", () => handleClose(room, ip));
   });
 };
 
