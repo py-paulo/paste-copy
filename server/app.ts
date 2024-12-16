@@ -1,4 +1,5 @@
 import logger from "./modules/logger";
+import config from "./config";
 
 import { getUsername } from "./modules/utils/user"; 
 import { Room } from "./modules/interface";
@@ -19,8 +20,10 @@ import amqp from 'amqplib';
 * TODO: Move to a configuration file
 *   - Buscar configurações a partir de arquivo de configuração
 */
-const port = 8000;
-const rabbitMQUrl = 'amqp://localhost';
+const port = config.port;
+const rabbitMQUrl = config.rabbitMQ.url;
+const mongodbUrl = config.mongodb.url;
+const redisUrl = config.redis.url;
 
 /*
 * Variables and instances global to the application
@@ -142,8 +145,7 @@ const connectToRabbitMQ = async () => {
 };
 
 async function connectToMongoDB() {
-  const mongoUrl = 'mongodb://root:mongo@localhost:27017';
-  const mongoClient = new MongoClient(mongoUrl);
+  const mongoClient = new MongoClient(mongodbUrl);
   await mongoClient.connect();
 
   return mongoClient.db('past_copy');
@@ -231,7 +233,7 @@ const setupWebSocketServer = async (mongoDb: Db, redisClient: RedisClientType) =
 
 const startServer = async () => {
   const mongoDb = await connectToMongoDB();
-  const redisClient = await createClient({ url: 'redis://localhost:6379' })
+  const redisClient = await createClient({ url: redisUrl })
     .on('error', err => console.log('Redis Client Error', err))
     .connect();
 

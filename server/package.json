@@ -13,6 +13,7 @@
   "dependencies": {
     "@types/uuid": "^10.0.0",
     "amqplib": "^0.10.5",
+    "dotenv": "^16.4.7",
     "mongodb": "^6.12.0",
     "pino": "^9.5.0",
     "redis": "^4.7.0",
