@@ -112,3 +112,140 @@
   font-size: 32px;
   font-family: "Fixedsys62";
 }
+
+/* Estilos do Chat */
+.chat-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+}
+
+.chat-messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: 10px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.chat-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: white;
+  opacity: 0.6;
+  font-size: 18px;
+}
+
+.chat-message {
+  padding: 8px 12px;
+  background-color: rgba(255, 255, 255, 0.05);
+  border-left: 3px solid white;
+  margin-left: 4px;
+  animation: fadeIn 0.3s ease-in;
+}
+
+.chat-message--own {
+  background-color: rgba(0, 168, 0, 0.1);
+  border-left-color: #56ff57ff;
+  margin-left: 0;
+  margin-right: 4px;
+  border-right: 3px solid #56ff57ff;
+  border-left: none;
+}
+
+.chat-message-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 4px;
+  font-size: 14px;
+}
+
+.chat-message-username {
+  color: var(--secondary-text);
+  font-weight: bold;
+  text-transform: uppercase;
+}
+
+.chat-message--own .chat-message-username {
+  color: #56ff57ff;
+}
+
+.chat-message-time {
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 12px;
+}
+
+.chat-message-text {
+  color: white;
+  font-size: 16px;
+  line-height: 1.4;
+  word-wrap: break-word;
+  white-space: pre-wrap;
+}
+
+.chat-input-container {
+  display: flex;
+  gap: 8px;
+  padding-top: 8px;
+  border-top: 2px solid rgba(255, 255, 255, 0.3);
+  margin-top: 8px;
+}
+
+.chat-input {
+  flex: 1;
+  border: 2px solid white;
+  background-color: var(--primary-bg-color);
+  color: white;
+  padding: 8px 12px;
+  font-family: "Fixedsys62";
+  font-size: 16px;
+  outline: none;
+  caret-color: yellow;
+}
+
+.chat-input:focus {
+  border-color: #56ff57ff;
+  box-shadow: 0 0 4px rgba(86, 255, 87, 0.5);
+}
+
+.chat-input::placeholder {
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.chat-send-button {
+  width: 50px;
+  border: 2px solid white;
+  background-color: var(--primary-bg-color);
+  color: white;
+  font-family: "Fixedsys62";
+  font-size: 20px;
+  cursor: pointer;
+  outline: none;
+  transition: all 0.2s ease;
+}
+
+.chat-send-button:hover {
+  background-color: var(--hover);
+  border-color: #56ff57ff;
+  color: #56ff57ff;
+}
+
+.chat-send-button:active {
+  background-color: rgba(0, 168, 0, 0.3);
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

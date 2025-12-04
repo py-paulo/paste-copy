@@ -1,5 +1,4 @@
 import React, { useEffect, useRef, useState } from "react";
-import throttle from "lodash.throttle";
 import useWebSocket from "react-use-websocket";
 import "./style.css";
 
@@ -11,35 +10,88 @@ const Main = ({ username, note }) => {
     share: true,
   });
 
-  const THROTTLE = 50;
-  const sendJsonMessageThrottled = useRef(throttle(sendJsonMessage, THROTTLE));
+  const [messages, setMessages] = useState([]);
+  const [inputMessage, setInputMessage] = useState("");
+  const messagesEndRef = useRef(null);
+  const messagesContainerRef = useRef(null);
 
-  const [myText, setMyText] = useState("");
-  const textareaRef = useRef(null);
-  const typingTimeoutRef = useRef(null);
+  // Scroll para a última mensagem quando novas mensagens chegarem
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
 
   useEffect(() => {
-    if (lastJsonMessage) {
-      textareaRef.current.value = lastJsonMessage.text;
+    scrollToBottom();
+  }, [messages]);
+
+  // Processar mensagens recebidas (histórico ou nova mensagem)
+  useEffect(() => {
+    if (!lastJsonMessage) return;
+
+    // Verificar se é um histórico completo
+    if (lastJsonMessage.type === 'history' && lastJsonMessage.messages) {
+      // Substituir todas as mensagens pelo histórico
+      setMessages(lastJsonMessage.messages);
+      return;
+    }
+
+    // Se for uma mensagem normal
+    if (lastJsonMessage.text) {
+      setMessages((prevMessages) => {
+        // Verificar se a mensagem já existe (evitar duplicatas)
+        const messageExists = prevMessages.some(
+          (msg) =>
+            msg.username === lastJsonMessage.username &&
+            msg.text === lastJsonMessage.text &&
+            msg.datatime === lastJsonMessage.datatime
+        );
+
+        if (!messageExists) {
+          return [...prevMessages, lastJsonMessage];
+        }
+        return prevMessages;
+      });
     }
   }, [lastJsonMessage]);
 
-  const handleTextareaChange = (e) => {
-    const text = e.target.value;
-    setMyText(text);
+  const handleInputChange = (e) => {
+    setInputMessage(e.target.value);
+  };
 
-    if (typingTimeoutRef.current) {
-      clearTimeout(typingTimeoutRef.current);
+  const handleSendMessage = (e) => {
+    e.preventDefault();
+    if (inputMessage.trim() === "") return;
+
+    const messageData = {
+      username,
+      text: inputMessage.trim(),
+      datatime: new Date().toISOString(),
+    };
+
+    // Adicionar mensagem localmente imediatamente
+    setMessages((prevMessages) => [...prevMessages, messageData]);
+
+    // Enviar mensagem via WebSocket
+    sendJsonMessage(messageData);
+
+    // Limpar input
+    setInputMessage("");
+  };
+
+  const handleKeyPress = (e) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      handleSendMessage(e);
     }
+  };
 
-    typingTimeoutRef.current = setTimeout(() => {
-      console.log("sending message:", text);
-      sendJsonMessageThrottled.current({
-        username,
-        text,
-        datatime: new Date().toISOString(),
-      });
-    }, 1000);
+  const formatTime = (datatime) => {
+    if (!datatime) return "";
+    const date = new Date(datatime);
+    return date.toLocaleTimeString("pt-BR", {
+      hour: "2-digit",
+      minute: "2-digit",
+    });
   };
 
   return (
@@ -53,19 +105,50 @@ const Main = ({ username, note }) => {
               <span>]</span>
             </span>
           </div>
-          <div className="painel-header---title">{note}.CPP</div>
+          <div className="painel-header---title">{note || "CHAT"}.MSG</div>
           <div className="painel-header--border---right" />
         </div>
-        <div className="painel-main">
-          <textarea
-            id="editor"
-            cols="30"
-            rows="10"
-            className="painel-main--input"
-            onChange={handleTextareaChange}
-            ref={textareaRef}
-            value={myText}
-          />
+        <div className="painel-main chat-container">
+          <div className="chat-messages" ref={messagesContainerRef}>
+            {messages.length === 0 ? (
+              <div className="chat-empty">
+                <p>Nenhuma mensagem ainda. Seja o primeiro a escrever!</p>
+              </div>
+            ) : (
+              messages.map((message, index) => (
+                <div
+                  key={`${message.username}-${message.datatime}-${index}`}
+                  className={`chat-message ${
+                    message.username === username ? "chat-message--own" : ""
+                  }`}
+                >
+                  <div className="chat-message-header">
+                    <span className="chat-message-username">
+                      {message.username}
+                    </span>
+                    <span className="chat-message-time">
+                      {formatTime(message.datatime)}
+                    </span>
+                  </div>
+                  <div className="chat-message-text">{message.text}</div>
+                </div>
+              ))
+            )}
+            <div ref={messagesEndRef} />
+          </div>
+          <form className="chat-input-container" onSubmit={handleSendMessage}>
+            <input
+              type="text"
+              className="chat-input"
+              placeholder="Digite sua mensagem e pressione Enter..."
+              value={inputMessage}
+              onChange={handleInputChange}
+              onKeyPress={handleKeyPress}
+            />
+            <button type="submit" className="chat-send-button">
+              &gt;
+            </button>
+          </form>
         </div>
         <div className="painel-footer">
           <div className="painel-footer--border" />
