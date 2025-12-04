@@ -39,11 +39,12 @@ const wsServer = new WebSocketServer({ server });
 * Contém todo o código referente à lógica de negócios do aplicativo,
 * incluindo a lógica de manipulação de mensagens WebSocket.
 */ 
-const handleClose = (room: string, ip: string) => {
-  const user = rooms[room].users[ip];
-  logger.info({ msg: `user '${user.username}' in room '${room}' disconnected`, ip, username: user.username, room, status: 'disconnected' });
-
-  delete rooms[room].users[ip];
+const handleClose = (room: string, uuid: string) => {
+  const user = rooms[room].users[uuid];
+  if (user) {
+    logger.info({ msg: `user '${user.username}' in room '${room}' disconnected`, ip: user.ip, username: user.username, room, uuid, status: 'disconnected' });
+    delete rooms[room].users[uuid];
+  }
 }
 
 /**
@@ -81,8 +82,8 @@ const broadcast = async (mongoDb: Db, room: string) => {
   const messageJsonStringfy = JSON.stringify(document.message);
   const messageObject = document.message;
 
-  Object.keys(rooms[room].users).forEach((ip) => {
-    const connection = rooms[room].users[ip].connection;
+  Object.keys(rooms[room].users).forEach((uuid) => {
+    const connection = rooms[room].users[uuid].connection;
     connection.send(messageJsonStringfy);
   });
 
@@ -117,6 +118,49 @@ const getLastMessageFromCache = async (redisClient: RedisClientType, room: strin
     console.error('Redis error:', err);
   }
 };
+
+/**
+ * Consulta o cache (Redis) para obter todas as mensagens da sala.
+ * 
+ * @param redisClient 
+ * @param room 
+ * @returns Array de mensagens do cache
+ */
+const getAllMessagesFromCache = async (redisClient: RedisClientType, room: string): Promise<string[]> => {
+  const cacheKey = `room:${room}:messages`;
+  try {
+    const results = await redisClient.lRange(cacheKey, 0, 99); // Busca até 100 mensagens (mesmo limite do lTrim)
+    if (results.length === 0) {
+      return [];
+    }
+    logger.debug({ msg: `find ${results.length} messages on cache`, room });
+    // Retorna as mensagens em ordem cronológica (mais antiga primeiro)
+    return results.reverse().map(msg => Buffer.from(msg).toString('utf-8'));
+  } catch (err) {
+    console.error('Redis error:', err);
+    return [];
+  }
+};
+
+/**
+ * Consulta o banco de dados para obter todas as mensagens da sala.
+ * 
+ * @param mongoDb 
+ * @param room 
+ * @param limit - Número máximo de mensagens a retornar (padrão: 100)
+ * @returns Array de mensagens do banco de dados
+ */
+async function getAllMessagesFromDatabase(mongoDb: Db, room: string, limit: number = 100): Promise<string[]> {
+  const messages = await mongoDb.collection(room)
+    .find({ room })
+    .sort({ _id: 1 }) // Ordem cronológica (mais antiga primeiro)
+    .limit(limit)
+    .toArray();
+
+  if (messages.length === 0) return [];
+
+  return messages.map(msg => JSON.stringify(msg));
+}
 
 const saveMessageToCache = async (
   redisClient: RedisClientType, room: string, message: string, ip: string, uuid: string
@@ -205,14 +249,37 @@ const setupWebSocketServer = async (mongoDb: Db, redisClient: RedisClientType) =
 
     if (!rooms[room]) rooms[room] = { lastNote: "", users: {} };
 
-    rooms[room].users[ip] = { username, uuid, connection: wsConnection };
+    rooms[room].users[uuid] = { username, uuid, ip, connection: wsConnection };
 
     /*
-    * Buscar mensagem a partir do Redis.
+    * Buscar histórico completo de mensagens a partir do Redis ou banco de dados.
     */
-    const lastMessage = await getLastMessageFromCache(redisClient, room) || await getLastMessageFromDatabase(mongoDb, room);
-    if (lastMessage) {
-      wsConnection.send(JSON.stringify(JSON.parse(lastMessage).message));
+    const cachedMessages = await getAllMessagesFromCache(redisClient, room);
+    let allMessages: string[] = [];
+
+    if (cachedMessages.length > 0) {
+      // Se há mensagens no cache, usa elas
+      allMessages = cachedMessages;
+    } else {
+      // Se não há no cache, busca do banco de dados
+      allMessages = await getAllMessagesFromDatabase(mongoDb, room);
+    }
+
+    // Enviar histórico completo para o cliente
+    if (allMessages.length > 0) {
+      // Enviar um array com todas as mensagens em uma única mensagem WebSocket
+      const messagesArray = allMessages.map(msgStr => {
+        const parsed = JSON.parse(msgStr);
+        return parsed.message;
+      });
+      
+      // Enviar como um objeto especial que indica que é o histórico inicial
+      wsConnection.send(JSON.stringify({
+        type: 'history',
+        messages: messagesArray
+      }));
+      
+      logger.debug({ msg: `sent ${messagesArray.length} messages history to user`, room, username, messageCount: messagesArray.length });
     }
 
     const queue = 'chat_messages';
@@ -225,7 +292,7 @@ const setupWebSocketServer = async (mongoDb: Db, redisClient: RedisClientType) =
       channel.sendToQueue(queue, Buffer.from(JSON.stringify({ room, ip, message, uuid })), { persistent: true });
     });
 
-    wsConnection.on("close", () => handleClose(room, ip));
+    wsConnection.on("close", () => handleClose(room, uuid));
   });
 };
 

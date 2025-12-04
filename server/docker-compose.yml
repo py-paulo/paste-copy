@@ -25,7 +25,7 @@ services:
   redis:
     # There is a prebuilt Redis image; see
     # https://hub.docker.com/r/bitnami/redis for details.
-    image: 'bitnami/redis:6.2.16'
+    image: 'bitnami/redis'
     environment:
       - ALLOW_EMPTY_PASSWORD=yes
       - REDIS_PORT_NUMBER=6379

@@ -7,9 +7,10 @@ import WebSocket from "ws";
 export interface Room {
   [roomName: string]: {
     users: {
-      [ip: string]: {
+      [uuid: string]: {
         username: string;
         uuid: string;
+        ip: string;
         connection: WebSocket;
       };
     }

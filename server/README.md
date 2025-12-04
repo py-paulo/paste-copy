@@ -45,12 +45,12 @@ WebSocket Client       WebSocket Server       RabbitMQ       Redis       MongoDB
 ## Como rodar localmente?
 
 > [!IMPORTANT]
-> Para executar essa aplicação é ncessário ter o **Docker**, `docker-compose` e o **nodejs** instalado na máquina.
+> Para executar essa aplicação é ncessário ter o **Docker**, `docker compose` e o **nodejs** instalado na máquina.
 
 Primeiro é necessário subir uma instância do Redis, MongoDb e RabbitMQ, faremos isso a partir do arquivo `docker-compose.yml` que tem a definição de todos os recursos em questão, com um adicional de algumas interfaces web de gerênciamento, tando do MongoDb quanto do RabbitMQ.
 
 ```bash
-docker-compose up -d
+docker compose up -d
 ```
 
 Na sequência já podemos instalar as dependências e iniciar o servidor:
